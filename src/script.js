@@ -342,7 +342,7 @@ gltfLoader.load(
                 child.scale.y = garage.geometry.parameters.height / 2.2;
                 child.scale.z = 0.05;
 
-                child.position.y = garageDoor.geometry.parameters.height / 2;
+                child.position.y = garage.geometry.parameters.height / 2 - 0.25;
                 child.position.z = garage.geometry.parameters.depth / 2 + 0.01;
                 child.position.x = garage.position.x;
             }
@@ -356,19 +356,64 @@ gltfLoader.load(
     }
 );
 
-const garageDoor = new THREE.Mesh(
-    new THREE.PlaneGeometry(1.5, 1.5),
-    new THREE.MeshStandardMaterial({ color: 'red' })
-);
-garageDoor.position.y = garageDoor.geometry.parameters.height / 2;
-garageDoor.position.z = garage.geometry.parameters.depth / 2 + 0.01;
-garageDoor.position.x = garage.position.x;
-// house.add(garageDoor);
-
 // Center house
 const houseWidth =
     walls.geometry.parameters.width + garage.geometry.parameters.width;
 house.position.x = -(houseWidth / 2 - walls.geometry.parameters.width / 2);
+
+// Windows
+gltfLoader.load(
+    '/models/window.glb',
+    (gltf) => {
+        const window1 = gltf.scene.clone(true);
+        window1.traverse((child) => {
+            if (child.isMesh) {
+                child.material = child.material.clone();
+                child.scale.set(0.6, 0.6, 0.6);
+                child.position.set(
+                    -walls.geometry.parameters.depth / 2 - 0.01,
+                    walls.geometry.parameters.height / 4,
+                    0
+                );
+            }
+        });
+        house.add(window1);
+
+        const window2 = gltf.scene.clone(true);
+        window2.traverse((child) => {
+            if (child.isMesh) {
+                child.material = child.material.clone();
+                child.scale.set(0.6, 0.5, 0.5);
+                child.position.set(
+                    walls.geometry.parameters.depth / 2 + garage.geometry.parameters.width + 0.01,
+                    garage.geometry.parameters.height / 4,
+                    0
+                );
+                child.rotation.y = Math.PI;
+            }
+        });
+        house.add(window2);
+
+        const window3 = gltf.scene.clone(true);
+        window3.traverse((child) => {
+            if (child.isMesh) {
+                child.material = child.material.clone();
+                child.scale.set(0.6, 0.6, 0.6);
+                child.position.set(
+                    0,
+                    walls.geometry.parameters.height / 4,
+                    -walls.geometry.parameters.depth / 2 - 0.01
+                );
+                child.rotation.y = Math.PI / 2 + Math.PI;
+            }
+        });
+        house.add(window3);
+    },
+    undefined,
+    (error) => {
+        console.error('Помилка завантаження моделі даху:', error);
+    }
+);
 
 // Roof
 const roof = new THREE.Mesh(
@@ -630,7 +675,7 @@ const tick = () => {
 
     // Ghosts animation
     const ghost1Angle = elapsedTime * 0.5;
-    ghost1.intensity = 4 + Math.sin(elapsedTime * 10) * 2;
+    ghost1.intensity = houseWidth + Math.sin(elapsedTime * 10) * 2;
     ghost1.position.x = Math.cos(ghost1Angle) * 4;
     ghost1.position.z = Math.sin(ghost1Angle) * 4;
     ghost1.position.y =
@@ -639,7 +684,7 @@ const tick = () => {
         Math.sin(ghost1Angle * 3.45);
 
     const ghost2Angle = -elapsedTime * 0.38;
-    ghost2.intensity = 4 + Math.sin(elapsedTime * 10) * 2;
+    ghost2.intensity = houseWidth + Math.sin(elapsedTime * 10) * 2;
     ghost2.position.x = Math.cos(ghost2Angle) * 5;
     ghost2.position.z = Math.sin(ghost2Angle) * 5;
     ghost2.position.y =
@@ -648,7 +693,7 @@ const tick = () => {
         Math.sin(ghost2Angle * 3.45);
 
     const ghost3Angle = elapsedTime * 0.23;
-    ghost3.intensity = 4 + Math.sin(elapsedTime * 10) * 2;
+    ghost3.intensity = houseWidth + Math.sin(elapsedTime * 10) * 2;
     ghost3.position.x = Math.cos(ghost3Angle) * 6;
     ghost3.position.z = Math.sin(ghost3Angle) * 6;
     ghost3.position.y =
