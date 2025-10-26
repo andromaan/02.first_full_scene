@@ -191,6 +191,39 @@ roofGarageColorTexture.wrapS = THREE.RepeatWrapping;
 roofGarageARMTexture.wrapS = THREE.RepeatWrapping;
 roofGarageNormalTexture.wrapS = THREE.RepeatWrapping;
 
+// Garage Door
+const garageDoorColorTexture = textureLoader.load(
+    './garage-door/textures/rusty_metal_05_diff_1k.jpg'
+);
+const garageDoorARMTexture = textureLoader.load(
+    './garage-door/textures/rusty_metal_05_arm_1k.jpg'
+);
+const garageDoorDisplacementTexture = textureLoader.load(
+    './garage-door/textures/rusty_metal_05_disp_1k.png'
+);
+const garageDoorNormalTexture = textureLoader.load(
+    './garage-door/textures/rusty_metal_05_nor_gl_1k.exr'
+);
+const garageDoorRoughnessTexture = textureLoader.load(
+    './garage-door/textures/rusty_metal_05_rough_1k.exr'
+);
+
+garageDoorColorTexture.colorSpace = THREE.SRGBColorSpace;
+
+const garageDoorRepeatX = 5;
+const garageDoorRepeatY = 5;
+garageDoorColorTexture.repeat.set(garageDoorRepeatX, garageDoorRepeatY);
+garageDoorARMTexture.repeat.set(garageDoorRepeatX, garageDoorRepeatY);
+garageDoorNormalTexture.repeat.set(garageDoorRepeatX, garageDoorRepeatY);
+
+garageDoorColorTexture.wrapS = THREE.RepeatWrapping;
+garageDoorARMTexture.wrapS = THREE.RepeatWrapping;
+garageDoorNormalTexture.wrapS = THREE.RepeatWrapping;
+
+garageDoorColorTexture.wrapT = THREE.RepeatWrapping;
+garageDoorARMTexture.wrapT = THREE.RepeatWrapping;
+garageDoorNormalTexture.wrapT = THREE.RepeatWrapping;
+
 /**
  * House
  */
@@ -262,8 +295,7 @@ gltfLoader.load(
             triangle_roof.material.normalMap = roofGarageNormalTexture;
             triangle_roof.material.needsUpdate = true;
 
-            triangle_roof.position.y =
-                garage.geometry.parameters.height + 0.01;
+            triangle_roof.position.y = garage.geometry.parameters.height + 0.01;
             triangle_roof.position.x = garage.position.x;
 
             triangle_roof.scale.x = garage.geometry.parameters.width / 2;
@@ -281,15 +313,13 @@ gltfLoader.load(
             roof.material.normalMap = roofGarageNormalTexture;
             roof.material.needsUpdate = true;
 
-            roof.position.y =
-                garage.geometry.parameters.height
+            roof.position.y = garage.geometry.parameters.height;
             roof.position.x = garage.position.x - 0.2;
 
             roof.scale.x = garage.geometry.parameters.width / 2 + 0.2;
             roof.scale.z = garage.geometry.parameters.depth / 2;
             house.add(roof);
         }
-
     },
     undefined,
     (error) => {
@@ -297,31 +327,43 @@ gltfLoader.load(
     }
 );
 
-const garageRoof = new THREE.Mesh(
-    new THREE.ConeGeometry(2.5, 1, 4),
-    new THREE.MeshStandardMaterial({
-        map: roofColorTexture,
-        aoMap: roofARMTexture,
-        roughnessMap: roofARMTexture,
-    })
-);
-garageRoof.position.y =
-    garage.geometry.parameters.height +
-    garageRoof.geometry.parameters.height / 2;
-garageRoof.rotation.y = Math.PI / 4;
-garageRoof.position.x = garage.position.x - 0.2;
-// house.add(garageRoof);
-
 // Garage Door
+gltfLoader.load(
+    '/models/garage_door.glb',
+    (gltf) => {
+        gltf.scene.traverse((child) => {
+            if (child.isMesh) {
+                child.material = child.material.clone();
+                child.material.map = garageDoorColorTexture;
+                child.material.aoMap = garageDoorARMTexture;
+                child.material.metalnessMap = garageDoorRoughnessTexture;
+
+                child.scale.x = garage.geometry.parameters.width / 2.5;
+                child.scale.y = garage.geometry.parameters.height / 2.2;
+                child.scale.z = 0.05;
+
+                child.position.y = garageDoor.geometry.parameters.height / 2;
+                child.position.z = garage.geometry.parameters.depth / 2 + 0.01;
+                child.position.x = garage.position.x;
+            }
+        });
+
+        house.add(gltf.scene);
+    },
+    undefined,
+    (error) => {
+        console.error('Помилка завантаження моделі даху:', error);
+    }
+);
+
 const garageDoor = new THREE.Mesh(
     new THREE.PlaneGeometry(1.5, 1.5),
     new THREE.MeshStandardMaterial({ color: 'red' })
 );
 garageDoor.position.y = garageDoor.geometry.parameters.height / 2;
-// garageDoor.position.z = 2 + 0.01;
 garageDoor.position.z = garage.geometry.parameters.depth / 2 + 0.01;
 garageDoor.position.x = garage.position.x;
-house.add(garageDoor);
+// house.add(garageDoor);
 
 // Center house
 const houseWidth =
