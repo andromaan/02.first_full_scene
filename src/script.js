@@ -3,6 +3,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import GUI from 'lil-gui';
 import { Timer } from 'three/addons/misc/Timer.js';
 import { Sky } from 'three/addons/objects/Sky.js';
+import { GLTFLoader } from 'three/examples/jsm/Addons.js';
 
 /**
  * Base
@@ -15,6 +16,9 @@ const canvas = document.querySelector('canvas.webgl');
 
 // Scene
 const scene = new THREE.Scene();
+
+// GLTF Loader
+const gltfLoader = new GLTFLoader();
 
 /**
  * Textures
@@ -65,6 +69,32 @@ const wallNormalTexture = textureLoader.load(
 );
 
 wallColorTexture.colorSpace = THREE.SRGBColorSpace;
+
+// Garage Roof Triangle
+const garageRoofTriangleColorTexture = textureLoader.load(
+    '/wall/castle_brick_broken_06_1k/castle_brick_broken_06_diff_1k.webp'
+);
+const garageRoofTriangleARMTexture = textureLoader.load(
+    '/wall/castle_brick_broken_06_1k/castle_brick_broken_06_arm_1k.webp'
+);
+const garageRoofTriangleNormalTexture = textureLoader.load(
+    '/wall/castle_brick_broken_06_1k/castle_brick_broken_06_nor_gl_1k.webp'
+);
+
+garageRoofTriangleColorTexture.colorSpace = THREE.SRGBColorSpace;
+
+const setRepeat = 2;
+garageRoofTriangleColorTexture.repeat.set(setRepeat, setRepeat);
+garageRoofTriangleARMTexture.repeat.set(setRepeat, setRepeat);
+garageRoofTriangleNormalTexture.repeat.set(setRepeat, setRepeat);
+
+garageRoofTriangleColorTexture.wrapS = THREE.RepeatWrapping;
+garageRoofTriangleARMTexture.wrapS = THREE.RepeatWrapping;
+garageRoofTriangleNormalTexture.wrapS = THREE.RepeatWrapping;
+
+garageRoofTriangleColorTexture.wrapT = THREE.RepeatWrapping;
+garageRoofTriangleARMTexture.wrapT = THREE.RepeatWrapping;
+garageRoofTriangleNormalTexture.wrapT = THREE.RepeatWrapping;
 
 // Roof
 const roofColorTexture = textureLoader.load(
@@ -138,6 +168,29 @@ const doorRoughnessTexture = textureLoader.load('./door/roughness.webp');
 
 doorColorTexture.colorSpace = THREE.SRGBColorSpace;
 
+// Roof (again for garage roof)
+const roofGarageColorTexture = textureLoader.load(
+    '/roof/roof_slates_02_1k/roof_slates_02_diff_1k.webp'
+);
+const roofGarageARMTexture = textureLoader.load(
+    '/roof/roof_slates_02_1k/roof_slates_02_arm_1k.webp'
+);
+const roofGarageNormalTexture = textureLoader.load(
+    '/roof/roof_slates_02_1k/roof_slates_02_nor_gl_1k.webp'
+);
+
+roofGarageColorTexture.colorSpace = THREE.SRGBColorSpace;
+
+const garageRoofRepeatX = 2;
+const garageRoofRepeatY = 2;
+roofGarageColorTexture.repeat.set(garageRoofRepeatX, garageRoofRepeatY);
+roofGarageARMTexture.repeat.set(garageRoofRepeatX, garageRoofRepeatY);
+roofGarageNormalTexture.repeat.set(garageRoofRepeatX, garageRoofRepeatY);
+
+roofGarageColorTexture.wrapS = THREE.RepeatWrapping;
+roofGarageARMTexture.wrapS = THREE.RepeatWrapping;
+roofGarageNormalTexture.wrapS = THREE.RepeatWrapping;
+
 /**
  * House
  */
@@ -191,11 +244,59 @@ const garage = new THREE.Mesh(
 );
 garage.position.y += garage.geometry.parameters.height / 2;
 garage.position.x +=
-    walls.geometry.parameters.width / 2 +
-    garage.geometry.parameters.width / 2;
+    walls.geometry.parameters.width / 2 + garage.geometry.parameters.width / 2;
 house.add(garage);
 
 // Garage Roof
+// Завантажте модель
+gltfLoader.load(
+    '/models/garage_roof_triangle.glb',
+    (gltf) => {
+        const triangle_roof = gltf.scene.getObjectByName('roof_triangle');
+        if (triangle_roof) {
+            triangle_roof.material = triangle_roof.material.clone();
+            triangle_roof.material.map = roofGarageColorTexture;
+            triangle_roof.material.aoMap = roofGarageARMTexture;
+            triangle_roof.material.roughnessMap = roofGarageARMTexture;
+            triangle_roof.material.metalnessMap = roofGarageARMTexture;
+            triangle_roof.material.normalMap = roofGarageNormalTexture;
+            triangle_roof.material.needsUpdate = true;
+
+            triangle_roof.position.y =
+                garage.geometry.parameters.height + 0.01;
+            triangle_roof.position.x = garage.position.x;
+
+            triangle_roof.scale.x = garage.geometry.parameters.width / 2;
+            triangle_roof.scale.z = garage.geometry.parameters.depth / 2;
+            house.add(triangle_roof);
+        }
+
+        const roof = gltf.scene.getObjectByName('roof');
+        if (roof) {
+            roof.material = roof.material.clone();
+            roof.material.map = roofGarageColorTexture;
+            roof.material.aoMap = roofGarageARMTexture;
+            roof.material.roughnessMap = roofGarageARMTexture;
+            roof.material.metalnessMap = roofGarageARMTexture;
+            roof.material.normalMap = roofGarageNormalTexture;
+            roof.material.needsUpdate = true;
+
+            roof.position.y =
+                garage.geometry.parameters.height
+            roof.position.x = garage.position.x - 0.2;
+
+            roof.scale.x = garage.geometry.parameters.width / 2 + 0.2;
+            roof.scale.z = garage.geometry.parameters.depth / 2;
+            house.add(roof);
+        }
+
+    },
+    undefined,
+    (error) => {
+        console.error('Помилка завантаження моделі даху:', error);
+    }
+);
+
 const garageRoof = new THREE.Mesh(
     new THREE.ConeGeometry(2.5, 1, 4),
     new THREE.MeshStandardMaterial({
@@ -209,16 +310,16 @@ garageRoof.position.y =
     garageRoof.geometry.parameters.height / 2;
 garageRoof.rotation.y = Math.PI / 4;
 garageRoof.position.x = garage.position.x - 0.2;
-house.add(garageRoof);
+// house.add(garageRoof);
 
 // Garage Door
 const garageDoor = new THREE.Mesh(
     new THREE.PlaneGeometry(1.5, 1.5),
-    new THREE.MeshStandardMaterial({ color: "red" })
+    new THREE.MeshStandardMaterial({ color: 'red' })
 );
 garageDoor.position.y = garageDoor.geometry.parameters.height / 2;
 // garageDoor.position.z = 2 + 0.01;
-garageDoor.position.z = garage.geometry.parameters.depth / 2  + 0.01;
+garageDoor.position.z = garage.geometry.parameters.depth / 2 + 0.01;
 garageDoor.position.x = garage.position.x;
 house.add(garageDoor);
 
@@ -261,7 +362,7 @@ const door = new THREE.Mesh(
     })
 );
 door.position.y = doorHeight / 2;
-door.position.z = walls.geometry.parameters.depth / 2  + 0.01;
+door.position.z = walls.geometry.parameters.depth / 2 + 0.01;
 house.add(door);
 
 // Bushes
