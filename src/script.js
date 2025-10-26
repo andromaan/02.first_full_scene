@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import GUI from 'lil-gui';
 import { Timer } from 'three/addons/misc/Timer.js';
-import { Sky } from 'three/addons/objects/Sky.js'
+import { Sky } from 'three/addons/objects/Sky.js';
 
 /**
  * Base
@@ -165,9 +165,8 @@ const house = new THREE.Group();
 scene.add(house);
 
 // Walls
-const wallsHeight = 2.5;
 const walls = new THREE.Mesh(
-    new THREE.BoxGeometry(4, wallsHeight, 4),
+    new THREE.BoxGeometry(4, 2.5, 4),
     new THREE.MeshStandardMaterial({
         map: wallColorTexture,
         aoMap: wallARMTexture,
@@ -176,13 +175,61 @@ const walls = new THREE.Mesh(
         normalMap: wallNormalTexture,
     })
 );
-walls.position.y += wallsHeight / 2;
+walls.position.y += walls.geometry.parameters.height / 2;
 house.add(walls);
 
+// Garage
+const garage = new THREE.Mesh(
+    new THREE.BoxGeometry(2.5, 2, 3),
+    new THREE.MeshStandardMaterial({
+        map: wallColorTexture,
+        aoMap: wallARMTexture,
+        roughnessMap: wallARMTexture,
+        metalnessMap: wallARMTexture,
+        normalMap: wallNormalTexture,
+    })
+);
+garage.position.y += garage.geometry.parameters.height / 2;
+garage.position.x +=
+    walls.geometry.parameters.width / 2 +
+    garage.geometry.parameters.width / 2;
+house.add(garage);
+
+// Garage Roof
+const garageRoof = new THREE.Mesh(
+    new THREE.ConeGeometry(2.5, 1, 4),
+    new THREE.MeshStandardMaterial({
+        map: roofColorTexture,
+        aoMap: roofARMTexture,
+        roughnessMap: roofARMTexture,
+    })
+);
+garageRoof.position.y =
+    garage.geometry.parameters.height +
+    garageRoof.geometry.parameters.height / 2;
+garageRoof.rotation.y = Math.PI / 4;
+garageRoof.position.x = garage.position.x - 0.2;
+house.add(garageRoof);
+
+// Garage Door
+const garageDoor = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.5, 1.5),
+    new THREE.MeshStandardMaterial({ color: "red" })
+);
+garageDoor.position.y = garageDoor.geometry.parameters.height / 2;
+// garageDoor.position.z = 2 + 0.01;
+garageDoor.position.z = garage.geometry.parameters.depth / 2  + 0.01;
+garageDoor.position.x = garage.position.x;
+house.add(garageDoor);
+
+// Center house
+const houseWidth =
+    walls.geometry.parameters.width + garage.geometry.parameters.width;
+house.position.x = -(houseWidth / 2 - walls.geometry.parameters.width / 2);
+
 // Roof
-const roofHeight = 1.5;
 const roof = new THREE.Mesh(
-    new THREE.ConeGeometry(3.5, roofHeight, 4),
+    new THREE.ConeGeometry(3.5, 1.5, 4),
     new THREE.MeshStandardMaterial({
         map: roofColorTexture,
         aoMap: roofARMTexture,
@@ -191,7 +238,8 @@ const roof = new THREE.Mesh(
         normalMap: roofNormalTexture,
     })
 );
-roof.position.y = wallsHeight + roofHeight / 2;
+roof.position.y =
+    walls.geometry.parameters.height + roof.geometry.parameters.height / 2;
 roof.rotation.y = Math.PI / 4;
 house.add(roof);
 
@@ -213,7 +261,7 @@ const door = new THREE.Mesh(
     })
 );
 door.position.y = doorHeight / 2;
-door.position.z = 2 + 0.01;
+door.position.z = walls.geometry.parameters.depth / 2  + 0.01;
 house.add(door);
 
 // Bushes
@@ -265,7 +313,7 @@ scene.add(graves);
 for (let i = 0; i < 30; i++) {
     // Coordinates
     const angle = Math.random() * Math.PI * 2;
-    const radius = 3 + Math.random() * 4;
+    const radius = houseWidth / 2 + 1 + Math.random() * 4;
     const x = Math.sin(angle) * radius;
     const z = Math.cos(angle) * radius;
 
@@ -305,7 +353,7 @@ scene.add(directionalLight);
 
 // Door light
 const doorLight = new THREE.PointLight('#ff7d46', 5);
-doorLight.position.set(0, doorHeight, wallsHeight);
+doorLight.position.set(0, doorHeight, walls.geometry.parameters.height);
 house.add(doorLight);
 
 /**
@@ -362,70 +410,67 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
  * Shadows
  */
 // Renderer
-renderer.shadowMap.enabled = true
+renderer.shadowMap.enabled = true;
 
-renderer.shadowMap.enabled = true
-renderer.shadowMap.type = THREE.PCFSoftShadowMap
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 // Cast and receive
-directionalLight.castShadow = true
-ghost1.castShadow = true
-ghost2.castShadow = true
-ghost3.castShadow = true
+directionalLight.castShadow = true;
+ghost1.castShadow = true;
+ghost2.castShadow = true;
+ghost3.castShadow = true;
 
-walls.castShadow = true
-walls.receiveShadow = true
-roof.castShadow = true
-floor.receiveShadow = true
+walls.castShadow = true;
+walls.receiveShadow = true;
+roof.castShadow = true;
+floor.receiveShadow = true;
 
-for(const grave of graves.children) {
-    grave.castShadow = true
-    grave.receiveShadow = true
+for (const grave of graves.children) {
+    grave.castShadow = true;
+    grave.receiveShadow = true;
 }
 
 // Mappings
-directionalLight.shadow.mapSize.width = 256
-directionalLight.shadow.mapSize.height = 256
-directionalLight.shadow.camera.top = 8
-directionalLight.shadow.camera.right = 8
-directionalLight.shadow.camera.bottom = - 8
-directionalLight.shadow.camera.left = - 8
-directionalLight.shadow.camera.near = 1
-directionalLight.shadow.camera.far = 20
+directionalLight.shadow.mapSize.width = 256;
+directionalLight.shadow.mapSize.height = 256;
+directionalLight.shadow.camera.top = 8;
+directionalLight.shadow.camera.right = 8;
+directionalLight.shadow.camera.bottom = -8;
+directionalLight.shadow.camera.left = -8;
+directionalLight.shadow.camera.near = 1;
+directionalLight.shadow.camera.far = 20;
 
-ghost1.shadow.mapSize.width = 256
-ghost1.shadow.mapSize.height = 256
-ghost1.shadow.camera.far = 10
+ghost1.shadow.mapSize.width = 256;
+ghost1.shadow.mapSize.height = 256;
+ghost1.shadow.camera.far = 10;
 
-ghost2.shadow.mapSize.width = 256
-ghost2.shadow.mapSize.height = 256
-ghost2.shadow.camera.far = 10
+ghost2.shadow.mapSize.width = 256;
+ghost2.shadow.mapSize.height = 256;
+ghost2.shadow.camera.far = 10;
 
-ghost3.shadow.mapSize.width = 256
-ghost3.shadow.mapSize.height = 256
-ghost3.shadow.camera.far = 10
-
+ghost3.shadow.mapSize.width = 256;
+ghost3.shadow.mapSize.height = 256;
+ghost3.shadow.camera.far = 10;
 
 /**
  * Sky
  */
-const sky = new Sky()
-sky.scale.set(100, 100, 100)
-scene.add(sky)
+const sky = new Sky();
+sky.scale.set(100, 100, 100);
+scene.add(sky);
 
-sky.material.uniforms['turbidity'].value = 10
-sky.material.uniforms['rayleigh'].value = 3
-sky.material.uniforms['mieCoefficient'].value = 0.1
-sky.material.uniforms['mieDirectionalG'].value = 0.95
-sky.material.uniforms['sunPosition'].value.set(0.3, -0.038, -0.95)
+sky.material.uniforms['turbidity'].value = 10;
+sky.material.uniforms['rayleigh'].value = 3;
+sky.material.uniforms['mieCoefficient'].value = 0.1;
+sky.material.uniforms['mieDirectionalG'].value = 0.95;
+sky.material.uniforms['sunPosition'].value.set(0.3, -0.038, -0.95);
 
 /**
  * Fog
  */
 // scene.fog = new THREE.Fog('#ff0000', 1, 13)
-scene.fog = new THREE.FogExp2('#04343f', 0.1)
-
-
+scene.fog = new THREE.FogExp2('#04343f', 0.1);
 
 /**
  * Animate
@@ -437,8 +482,12 @@ const tick = () => {
     timer.update();
     const elapsedTime = timer.getElapsed();
 
+    // Door light flicker
+    doorLight.intensity = 3 + Math.sin(elapsedTime * 20) * Math.random();
+
     // Ghosts animation
     const ghost1Angle = elapsedTime * 0.5;
+    ghost1.intensity = 4 + Math.sin(elapsedTime * 10) * 2;
     ghost1.position.x = Math.cos(ghost1Angle) * 4;
     ghost1.position.z = Math.sin(ghost1Angle) * 4;
     ghost1.position.y =
@@ -447,6 +496,7 @@ const tick = () => {
         Math.sin(ghost1Angle * 3.45);
 
     const ghost2Angle = -elapsedTime * 0.38;
+    ghost2.intensity = 4 + Math.sin(elapsedTime * 10) * 2;
     ghost2.position.x = Math.cos(ghost2Angle) * 5;
     ghost2.position.z = Math.sin(ghost2Angle) * 5;
     ghost2.position.y =
@@ -455,6 +505,7 @@ const tick = () => {
         Math.sin(ghost2Angle * 3.45);
 
     const ghost3Angle = elapsedTime * 0.23;
+    ghost3.intensity = 4 + Math.sin(elapsedTime * 10) * 2;
     ghost3.position.x = Math.cos(ghost3Angle) * 6;
     ghost3.position.z = Math.sin(ghost3Angle) * 6;
     ghost3.position.y =
