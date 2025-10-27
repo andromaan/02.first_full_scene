@@ -519,6 +519,31 @@ for (let i = 0; i < 30; i++) {
     graves.add(grave);
 }
 
+// Tree
+// Windows
+gltfLoader.load(
+    '/models/tree.glb',
+    (gltf) => {
+        const tree1 = gltf.scene.clone(true);
+        tree1.traverse((child) => {
+            if (child.isMesh) {
+                child.material = child.material.clone();
+                child.scale.set(0.2, 0.2, 0.2);
+                child.position.set(
+                    -walls.geometry.parameters.depth / 2 - 1.5,
+                    0.05,
+                    0
+                );
+            }
+        });
+        house.add(tree1);
+    },
+    undefined,
+    (error) => {
+        console.error('Помилка завантаження моделі даху:', error);
+    }
+);
+
 /**
  * Ghosts
  */
